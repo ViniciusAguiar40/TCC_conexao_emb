@@ -36,7 +36,7 @@
 #define PROJ_CFG_PUBLISH_TSK_SZ         (configMINIMAL_STACK_SIZE * 5)
 #define PROJ_CFG_PUBLISH_TSK_PRIORITY   (tskIDLE_PRIORITY + 3)
 
-#define PUBLISH_QUEUE_LENGTH    (16)
+#define PUBLISH_QUEUE_LENGTH    (32)
 #define MAX_TOPIC_SIZE          (36)
 #define MAX_DATA_SIZE           (75)
 
@@ -97,7 +97,7 @@ esp_err_t mqttMgr_Init(void)
     /* Create task to handle with data publishing */
     if(publish_tsk_h == NULL)
     {
-        xTaskCreate(publish_task,
+        err = xTaskCreate(publish_task,
                     PROJ_CFG_PUBLISH_TSK_NAME,
                     PROJ_CFG_PUBLISH_TSK_SZ,
                     NULL,
@@ -171,7 +171,7 @@ bool mqttMgr_InsertPubQueue(uint8_t *topic, uint8_t *data, uint16_t data_size)
 
     /* Copies the topic and data to insert on the queue */
     strcpy(newData.topic, (char*) topic);
-    strcpy(newData.data, (char*) data);
+    memcpy(newData.data, (char*) data, data_size);
     newData.data_size = data_size;
 
     /* Insert data on queue */
