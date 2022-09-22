@@ -19,6 +19,7 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 
+#include "misc.h"
 #include "periph_spi.h"
 #include "mqtt_mgr.h"
 #include "wifi_mgr.h"

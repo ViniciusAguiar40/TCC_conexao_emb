@@ -21,6 +21,8 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
+#include "misc.h"
+
 /* Private definitions ********************************************************/
 #define TAG "MQTT_MGR"
 
@@ -129,12 +131,12 @@ esp_err_t mqttMgr_Publish(uint8_t *topic, uint8_t *data, uint16_t data_size)
 
     if(ret == ESP_OK)
     {
-        ESP_LOGI(TAG, "Data has been successfully published at the topic %s", topic);
+        TCC_LOGI(TAG, "Data has been successfully published at the topic %s", topic);
         ESP_LOG_BUFFER_CHAR(TAG, data, data_size);
     }
     else
     {
-        ESP_LOGE(TAG, "Data has not been published. Error code: %x",ret);
+        TCC_LOGE(TAG, "Data has not been published. Error code: %x",ret);
     }
     return ret;
 }
@@ -153,17 +155,17 @@ bool mqttMgr_InsertPubQueue(uint8_t *topic, uint8_t *data, uint16_t data_size)
 {
     if(publishQueue == NULL)
     {
-        ESP_LOGE(TAG, "Queue not initialized");
+        TCC_LOGE(TAG, "Queue not initialized");
         return false; // queue not initialized
     }
     if(data_size > MAX_DATA_SIZE)
     {
-        ESP_LOGE(TAG, "Too much data");
+        TCC_LOGE(TAG, "Too much data");
         return false;
     }
     if(strlen((char*)topic) > MAX_TOPIC_SIZE)
     {
-        ESP_LOGE(TAG, "Topic size too large");
+        TCC_LOGE(TAG, "Topic size too large");
         return false;
     }
     data_publish_t newData;
@@ -210,7 +212,7 @@ static void publish_task(void *pv)
 static void log_error_if_nonzero(const char *message, int error_code)
 {
     if (error_code != 0) {
-        ESP_LOGE(TAG, "Last error %s: 0x%x", message, error_code);
+        TCC_LOGE(TAG, "Last error %s: 0x%x", message, error_code);
     }
 }
 
@@ -229,47 +231,47 @@ static void mqtt_event_handler(void *handler_args,
                                int32_t event_id,
                                void *event_data)
 {
-    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
+    TCC_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
     esp_mqtt_event_handle_t event = event_data;
 
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
-        ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+        TCC_LOGI(TAG, "MQTT_EVENT_CONNECTED");
         break;
 
     case MQTT_EVENT_DISCONNECTED:
-        ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        TCC_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
-        ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+        TCC_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
         break;
 
     case MQTT_EVENT_UNSUBSCRIBED:
-        ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+        TCC_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
         break;
 
     case MQTT_EVENT_PUBLISHED:
-        ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+        TCC_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
         break;
 
     case MQTT_EVENT_DATA:
-        ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+        TCC_LOGI(TAG, "MQTT_EVENT_DATA");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
         break;
 
     case MQTT_EVENT_ERROR:
-        ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+        TCC_LOGI(TAG, "MQTT_EVENT_ERROR");
         if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
             log_error_if_nonzero("reported from esp-tls", event->error_handle->esp_tls_last_esp_err);
             log_error_if_nonzero("reported from tls stack", event->error_handle->esp_tls_stack_err);
             log_error_if_nonzero("captured as transport's socket errno",  event->error_handle->esp_transport_sock_errno);
-            ESP_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
+            TCC_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
         }
         break;
     default:
-        ESP_LOGI(TAG, "Other event id:%d", event->event_id);
+        TCC_LOGI(TAG, "Other event id:%d", event->event_id);
         break;
     }
 }

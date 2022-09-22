@@ -15,6 +15,7 @@
 #include "driver/gpio.h"
 
 #include "mqtt_mgr.h"
+#include "misc.h"
 
 /* Private definitions ********************************************************/
 // SPI
@@ -150,85 +151,85 @@ static void periph_spi_task(void *pv)
         ret = spi_slave_transmit(RCV_HOST, &t, portMAX_DELAY);
         assert (ret == ESP_OK);
 
-        ESP_LOGI(TAG, "NEW MESSAGE!");
+        TCC_LOGI(TAG, "NEW MESSAGE!");
 
         header = recvbuf[0];
         switch (header)
         {
         case BATTERY_VOLTAGE_HEADER:
-            ESP_LOG_BUFFER_HEX(TAG, recvbuf, BATTERY_VOLTAGE_DATALEN + 3);
+            TCC_LOG_BUFFER_HEX(TAG, recvbuf, BATTERY_VOLTAGE_DATALEN + 3);
             if (verify_crc(recvbuf, BATTERY_VOLTAGE_DATALEN + 3))
             {
                 batteryVoltage_parser(recvbuf, BATTERY_VOLTAGE_DATALEN);
             }
             else
             {
-                ESP_LOGE(TAG, "CRC error");
+                TCC_LOGE(TAG, "CRC error");
             }
 
             break;
 
         case MOTOR_CURRENT_HEADER:
-            ESP_LOG_BUFFER_HEX(TAG, recvbuf, MOTOR_CURRENT_DATALEN + 3);
+            TCC_LOG_BUFFER_HEX(TAG, recvbuf, MOTOR_CURRENT_DATALEN + 3);
             if (verify_crc(recvbuf, MOTOR_CURRENT_DATALEN + 3))
             {
                 motorCurrent_parser(recvbuf, MOTOR_CURRENT_DATALEN);
             }
             else
             {
-                ESP_LOGE(TAG, "CRC error");
+                TCC_LOGE(TAG, "CRC error");
             }
             break;
 
         case LEFT_MOTOR_POWER_HEADER:
-            ESP_LOG_BUFFER_HEX(TAG, recvbuf, LEFT_MOTOR_POWER_DATALEN + 3);
+            TCC_LOG_BUFFER_HEX(TAG, recvbuf, LEFT_MOTOR_POWER_DATALEN + 3);
             if (verify_crc(recvbuf, LEFT_MOTOR_POWER_DATALEN + 3))
             {
                 leftMotorPower_parser(recvbuf, LEFT_MOTOR_POWER_DATALEN);
             }
             else
             {
-                ESP_LOGE(TAG, "CRC error");
+                TCC_LOGE(TAG, "CRC error");
             }
             break;
 
         case RIGHT_MOTOR_POWER_HEADER:
-            ESP_LOG_BUFFER_HEX(TAG, recvbuf, RIGHT_MOTOR_POWER_DATALEN + 3);
+            TCC_LOG_BUFFER_HEX(TAG, recvbuf, RIGHT_MOTOR_POWER_DATALEN + 3);
             if (verify_crc(recvbuf, RIGHT_MOTOR_POWER_DATALEN + 3))
             {
                 rightMotorPower_parser(recvbuf, RIGHT_MOTOR_POWER_DATALEN);
             }
             else
             {
-                ESP_LOGE(TAG, "CRC error");
+                TCC_LOGE(TAG, "CRC error");
             }
             break;
 
         case MOTOR_SPEED_HEADER:
-            ESP_LOG_BUFFER_HEX(TAG, recvbuf, MOTOR_SPEED_DATALEN + 3);
+            TCC_LOG_BUFFER_HEX(TAG, recvbuf, MOTOR_SPEED_DATALEN + 3);
             if (verify_crc(recvbuf, MOTOR_SPEED_DATALEN + 3))
             {
                 motorSpeed_parser(recvbuf, MOTOR_SPEED_DATALEN);
             }
             else
             {
-                ESP_LOGE(TAG, "CRC error");
+                TCC_LOGE(TAG, "CRC error");
             }
             break;
 
         case SELECTED_MOVE_HEADER:
-            ESP_LOG_BUFFER_HEX(TAG, recvbuf, SELECTED_MOVE_DATALEN + 3);
+            TCC_LOG_BUFFER_HEX(TAG, recvbuf, SELECTED_MOVE_DATALEN + 3);
             if (verify_crc(recvbuf, SELECTED_MOVE_DATALEN + 3))
             {
                 selectedMove_parser(recvbuf, SELECTED_MOVE_DATALEN);
             }
             else
             {
-                ESP_LOGE(TAG, "CRC error");
+                TCC_LOGE(TAG, "CRC error");
             }
             break;
         default:
-            ESP_LOGE(TAG, "Invalid header");
+            TCC_LOGE(TAG, "Invalid header");
         }
         printf("\n\n");
     }
@@ -291,11 +292,11 @@ static void batteryVoltage_parser(uint8_t *packet, uint8_t nBytes)
     uint8_t topic[] = {"TCC_RobotBulls/bateria"};
 
     batteryLevel = ((uint16_t)packet[1] << 8) | (uint16_t)packet[2];
-    ESP_LOGI(TAG,"Battery level: %5u",batteryLevel);
+    TCC_LOGI(TAG,"Battery level: %5u",batteryLevel);
 
     memset(pub, (0), sizeof(pub));
     snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"bateria\",\"value\": %2u.%01u, \"unit\" : \"V\"}]", batteryLevel/10, batteryLevel%10);
-    ESP_LOGI(TAG,"%s",pub);
+    TCC_LOGI(TAG,"%s",pub);
     mqttMgr_InsertPubQueue(topic, pub, 53);
 }   
 
@@ -314,17 +315,17 @@ static void motorCurrent_parser(uint8_t *packet, uint8_t nBytes)
 
     leftMotorCurrent = ((uint16_t)packet[1]) | (uint16_t)packet[2];
     rightMotorCurrent = ((uint16_t)packet[3]) | (uint16_t)packet[4];
-    ESP_LOGI(TAG, "Left motor current: %5u",leftMotorCurrent);
-    ESP_LOGI(TAG, "Right motor current: %5u",rightMotorCurrent);
+    TCC_LOGI(TAG, "Left motor current: %5u",leftMotorCurrent);
+    TCC_LOGI(TAG, "Right motor current: %5u",rightMotorCurrent);
 
     memset(pub,(0),sizeof(pub));
     snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"corrente_esquerda\",\"value\": %3u.%02u, \"unit\" : \"A\"}]", leftMotorCurrent/100, leftMotorCurrent%100);
-    ESP_LOGI(TAG,"%s",pub);
+    TCC_LOGI(TAG,"%s",pub);
     mqttMgr_InsertPubQueue(topic_1, pub, 65);
 
     memset(pub,(0),sizeof(pub));
     snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"corrente_direita\",\"value\": %3u.%02u, \"unit\" : \"A\"}]", rightMotorCurrent/100, rightMotorCurrent%100);
-    ESP_LOGI(TAG,"%s",pub);
+    TCC_LOGI(TAG,"%s",pub);
     mqttMgr_InsertPubQueue(topic_2, pub, 64);
 }
 
@@ -341,7 +342,7 @@ static void leftMotorPower_parser(uint8_t *packet, uint8_t nBytes)
     uint8_t topic[] = {"TCC_RobotBulls/potencia_esquerda"};
 
     leftMotorPower = packet[1];
-    ESP_LOGI(TAG,"Left motor power: %3u",leftMotorPower);
+    TCC_LOGI(TAG,"Left motor power: %3u",leftMotorPower);
     
     memset(pub, (0), sizeof(pub));
     if(leftMotorPower > 63) // POSITIVE
@@ -349,7 +350,7 @@ static void leftMotorPower_parser(uint8_t *packet, uint8_t nBytes)
         // ((leftMotorPower-64)*10000) / 63 = abcd = ab.cd%
         snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"potencia_esquerda\",\"value\": %2u.%02u, \"unit\" : \"%%\"}]",
          (((leftMotorPower-64)*10000) / 63)/100, (((leftMotorPower-64)*10000) / 63)%100);
-        ESP_LOGI(TAG,"%s",pub);
+        TCC_LOGI(TAG,"%s",pub);
         mqttMgr_InsertPubQueue(topic, pub, 65);
     }
     else    // NEGATIVE
@@ -357,7 +358,7 @@ static void leftMotorPower_parser(uint8_t *packet, uint8_t nBytes)
         // (abs(64-leftMotorPower)*10000) / 63 = abcd = -ab.cd%
         snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"potencia_esquerda\",\"value\": -%2u.%02u, \"unit\" : \"%%\"}]",
          ((abs(64-leftMotorPower)*10000) / 63)/100, ((abs(64-leftMotorPower)*10000) / 63)%100);
-        ESP_LOGI(TAG,"%s",pub);
+        TCC_LOGI(TAG,"%s",pub);
         mqttMgr_InsertPubQueue(topic, pub, 66);
     }
 }
@@ -375,7 +376,7 @@ static void rightMotorPower_parser(uint8_t *packet, uint8_t nBytes)
     uint8_t topic[] = {"TCC_RobotBulls/potencia_direita"};
 
     rightMotorPower = packet[1];
-    ESP_LOGI(TAG,"Right motor power: %3u",rightMotorPower);
+    TCC_LOGI(TAG,"Right motor power: %3u",rightMotorPower);
     
     memset(pub, (0), sizeof(pub));
     if(rightMotorPower > 63) // POSITIVE
@@ -383,7 +384,7 @@ static void rightMotorPower_parser(uint8_t *packet, uint8_t nBytes)
         // ((rightMotorPower-64)*10000) / 63 = abcd = ab.cd%
         snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"potencia_direita\",\"value\": %2u.%02u, \"unit\" : \"%%\"}]",
          (((rightMotorPower-64)*10000) / 63)/100, (((rightMotorPower-64)*10000) / 63)%100);
-        ESP_LOGI(TAG,"%s",pub);
+        TCC_LOGI(TAG,"%s",pub);
         mqttMgr_InsertPubQueue(topic, pub, 64);
     }
     else    // NEGATIVE
@@ -391,7 +392,7 @@ static void rightMotorPower_parser(uint8_t *packet, uint8_t nBytes)
         // (abs(64-rightMotorPower)*10000) / 63 = abcd = -ab.cd%
         snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"potencia_direita\",\"value\": -%2u.%02u, \"unit\" : \"%%\"}]",
          ((abs(64-rightMotorPower)*10000) / 63)/100, ((abs(64-rightMotorPower)*10000) / 63)%100);
-        ESP_LOGI(TAG,"%s",pub);
+        TCC_LOGI(TAG,"%s",pub);
         mqttMgr_InsertPubQueue(topic, pub, 65);
     }
 }
@@ -416,17 +417,17 @@ static void motorSpeed_parser(uint8_t *packet, uint8_t nBytes)
     rightMotorSpeed = ((uint32_t)(packet[5]<<24) | (uint32_t)(packet[6]<<16)
                     |(uint32_t)(packet[7]<<8)|(uint32_t)(packet[8]));
     
-    ESP_LOGI(TAG,"Left motor speed: %10u",leftMotorSpeed);
-    ESP_LOGI(TAG,"Right motor speed: %10u",rightMotorSpeed);
+    TCC_LOGI(TAG,"Left motor speed: %10u",leftMotorSpeed);
+    TCC_LOGI(TAG,"Right motor speed: %10u",rightMotorSpeed);
 
     memset(pub,(0),sizeof(pub));
     snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"velocidade_esquerda\",\"value\": %1u.%06u, \"unit\" : \"m/s\"}]", leftMotorSpeed/1000000, leftMotorSpeed%1000000);
-    ESP_LOGI(TAG,"%s",pub);
+    TCC_LOGI(TAG,"%s",pub);
     mqttMgr_InsertPubQueue(topic_1, pub, 71);
 
     memset(pub,(0),sizeof(pub));
     snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"velocidade_direita\",\"value\": %1u.%06u, \"unit\" : \"m/s\"}]", rightMotorSpeed/1000000, rightMotorSpeed%1000000);
-    ESP_LOGI(TAG,"%s",pub);
+    TCC_LOGI(TAG,"%s",pub);
     mqttMgr_InsertPubQueue(topic_2, pub, 70);
 }
 
@@ -443,10 +444,10 @@ static void selectedMove_parser(uint8_t *packet, uint8_t nBytes)
     uint8_t topic[] = {"TCC_RobotBulls/jogada"};
 
     selectedMove = packet[1];
-    ESP_LOGI(TAG,"Jogada: %3u", selectedMove);
+    TCC_LOGI(TAG,"Jogada: %3u", selectedMove);
     
     memset(pub, (0), sizeof(pub));
     snprintf((char*)pub, sizeof(pub), "[{\"variable\": \"jogada\",\"value\": %3u}]", selectedMove);
-    ESP_LOGI(TAG, "%s", pub);
+    TCC_LOGI(TAG, "%s", pub);
     mqttMgr_InsertPubQueue(topic, pub, 37);
 }
